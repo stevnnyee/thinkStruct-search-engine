@@ -2,96 +2,81 @@
 
 ## Project Overview
 
-**Problem**: Patent attorneys spend days manually searching for similar patents before filing applications. This is expensive and error-prone.
+**Problem**: Patent attorneys spend days manually searching for similar patents before filing applications.
 
 **Solution**: Automated patent similarity search that finds potential conflicts in seconds.
 
-## Demo
-
-```bash
-# Quick start
-python3 src/data_loader.py  # Loads 640 vehicle patents
-python3 src/search_engine.py # Search for similar patents
-```
-
-**Example Output:**
-```
-Search: "wireless vehicle collision sensor"
-Results:
-HIGH RISK: Patent #US20240123 (87% similar)
-MEDIUM RISK: Patent #US20240456 (72% similar)  
-LOW RISK: Patent #US20240789 (34% similar)
-```
-
 ## What It Does
 
-**Input**: Patent text, ID, or natural language query
-**Analysis**: Compare against 640 vehicle patents using TF-IDF + cosine similarity
-**Output**: Ranked list of similar patents with risk assessment (High/Medium/Low)
+**Inputs** (as specified in project guidelines):
+- Natural language query (e.g., "wireless vehicle sensor")
+- Patent ID (e.g., "20240293901")
 
-## Technical Approach
+**Outputs** (as specified in project guidelines):
+- Patent metadata (ID, title, similarity score)
+- Risk assessment (HIGH/MEDIUM/LOW conflict risk)
+- Ranked similar patents
 
-### Data Pipeline
-1. **Load**: 640 vehicle patents (2024-present) from JSON files
-2. **Clean**: 100% field coverage - no missing critical data
-3. **Process**: Extract claims, titles, abstracts for analysis
+## Quick Start
 
-### Search Algorithm
-- **Vectorization**: TF-IDF on patent claims (legally precise)
-- **Similarity**: Cosine similarity scoring
-- **Risk Scoring**: 
-  - >70% = High Risk
-  - 40-70% = Medium Risk  
-  - <40% = Low Risk
+```bash
+# 1. Setup
+pip install pandas numpy scikit-learn
 
-### Performance
-- **Speed**: Sub-second search across 640 patents
-- **Accuracy**: Claims-focused analysis (most legally relevant)
-- **Scalability**: Modular design for larger datasets
+# 2. Run demo
+python3 src/search_engine.py
+
+# 3. Run tests
+python3 tests/test_search_engine.py
+
+# 4. Interactive mode
+python3 src/search_engine.py interactive
+```
+
+## Example Usage
+
+```bash
+# Demo output
+Query: 'wireless vehicle sensor'
+Results:
+  LOW: 20240391278 (0.199) - TWO-WAY TIRE PRESSURE MONITORING SYSTEM
+  LOW: 20240278598 (0.193) - WHEEL HUB...
+  LOW: 20240239143 (0.191) - SYSTEMS AND METHODS TO SELECTIVELY ACTIVATE TPMS...
+```
+
+## Technical Implementation
+
+- **Data**: 640 vehicle patents (2024-present)
+- **Algorithm**: TF-IDF vectorization + cosine similarity
+- **Focus**: Patent claims (legally binding definitions)
+- **Risk Scoring**: >70% = High, 40-70% = Medium, <40% = Low
 
 ## Project Structure
 
 ```
 thinkStruct-search-engine/
 ├── src/
-│   ├── data_loader.py      # Loads and validates patent data
+│   ├── data_loader.py      # Loads patent data
 │   └── search_engine.py    # Core search functionality
+├── tests/
+│   └── test_search_engine.py # Simple tests
 ├── data/patent_data_small/ # 640 vehicle patents
-└── notebooks/              # Data exploration
+└── requirements.txt        # Dependencies
 ```
 
-## Quick Start
+## Testing
 
 ```bash
-# 1. Setup
-git clone <repo>
-cd thinkStruct-search-engine
-pip install pandas numpy scikit-learn
-
-# 2. Verify data
-python3 src/data_loader.py
-# Output: "Total patents loaded: 640"
-
-# 3. Run search
-python3 src/search_engine.py
+python3 tests/test_search_engine.py
 ```
 
-## Key Design Decisions
+Tests verify:
+- Data loading works
+- Text search functionality
+- Patent similarity detection
+- Risk assessment accuracy
 
-1. **Claims-First**: Patent claims are legally binding - most important for conflict detection
-2. **TF-IDF**: Handles technical patent language effectively
-3. **Risk Thresholds**: Clear business logic for decision-making
-4. **Data Quality**: 100% field coverage ensures reliable results
+---
 
-## Business Impact
-
-- **For Attorneys**: Days → Seconds for prior art searches
-- **For Inventors**: Early conflict detection saves filing costs
-- **For Companies**: Automated patent portfolio analysis
-
-## Current Status
-
-**Complete**: Data loading, validation, pipeline  
-**In Progress**: Search algorithm implementation  
-**Next**: User interface, risk scoring refinement
+*Built for ThinkStruct interview - demonstrates patent analysis capabilities*
 
