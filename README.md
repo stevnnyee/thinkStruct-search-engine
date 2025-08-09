@@ -46,6 +46,21 @@ python3 src/data_loader.py
 - **Cosine Similarity**: Standard semantic similarity measurement
 - **Risk Scoring**: >70% = High Risk, 40-70% = Medium Risk, <40% = Low Risk
 
+**Current Implementation**: TF-IDF vectorization for rapid prototyping and demonstration
+**Production Roadmap**: Semantic embeddings (sentence-transformers, PatentBERT) for improved conceptual similarity
+
+**Why TF-IDF for this prototype**:
+- Fast implementation within 2-hour constraint
+- Demonstrates core search architecture
+- Reliable baseline for hybrid search development
+
+**Known Limitations**:
+- Cannot capture semantic similarity between technical synonyms
+- May miss conceptually identical patents with different terminology
+- Example: "wireless sensor" vs "radio frequency detector" = 0% similarity despite identical meaning
+
+**Next Steps**: Implement semantic embeddings to capture meaning beyond word matching
+
 ### Implementation
 
 ```python
