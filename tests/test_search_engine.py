@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Simple tests for the patent search engine.
 Tests the core functionality as specified in the project guidelines.
@@ -84,6 +83,40 @@ def test_patent_similarity():
     
     return similar_patents
 
+def test_hybrid_search():
+    """Test 4: Verify hybrid search works"""
+    print("\nTest 4: Hybrid Search")
+    
+    # Load data
+    loader = PatentDataLoader()
+    patents = loader.load_all_patents()
+    df = loader.patents_to_dataframe(patents)
+    
+    # Initialize engine
+    engine = BasicPatentSearchEngine(df)
+    
+    # Test hybrid search with classification filter
+    hybrid_results = engine.hybrid_search(
+        query="sensor",
+        classification_filter="B60",
+        top_k=3
+    )
+    
+    assert len(hybrid_results) > 0, "No hybrid search results found"
+    assert all('patent_id' in result for result in hybrid_results), "Missing patent_id in results"
+    assert all('risk_level' in result for result in hybrid_results), "Missing risk_level in results"
+    
+    print(f"Hybrid search: 'sensor' + classification 'B60'")
+    print(f"Found {len(hybrid_results)} filtered results")
+    for result in hybrid_results:
+        print(f"  {result['risk_level']}: {result['patent_id']} ({result['similarity_score']:.3f})")
+    
+    # Check timing
+    if hybrid_results and 'search_time_ms' in hybrid_results[0]:
+        print(f"Search time: {hybrid_results[0]['search_time_ms']}ms")
+    
+    return hybrid_results
+
 def run_all_tests():
     """Run all tests and report results"""
     print("Patent Search Engine - Tests")
@@ -98,10 +131,14 @@ def run_all_tests():
         # Test 3: Patent similarity
         similarity_results = test_patent_similarity()
         
+        # Test 4: Hybrid search
+        hybrid_results = test_hybrid_search()
+        
         print("\nALL TESTS PASSED")
         print("Data loading works")
         print("Text search works") 
         print("Patent similarity works")
+        print("Hybrid search works")
         print("Search engine follows project guidelines")
         
     except Exception as e:

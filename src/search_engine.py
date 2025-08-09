@@ -137,6 +137,63 @@ class BasicPatentSearchEngine:
         
         return results
 
+    def hybrid_search(self, query: str, classification_filter: str = None, 
+                     title_keywords: str = None, specific_title: str = None, 
+                     top_k: int = 5) -> List[Dict]:
+        """
+        Hybrid search with filters:
+        - query: semantic search query
+        - classification_filter: filter by classification code (e.g., "B60B")
+        - title_keywords: keywords that must appear in title
+        - specific_title: exact title to search for
+        """
+        import time
+        start_time = time.time()
+        
+        # Step 1: Get semantic search results
+        semantic_results = self.search_text(query, top_k=top_k*3)  # Get more candidates
+        
+        # Step 2: Apply filters
+        filtered_results = []
+        
+        for result in semantic_results:
+            patent_id = result['patent_id']
+            patent_data = self.patents_df[self.patents_df['doc_number'] == patent_id].iloc[0]
+            
+            # Filter by classification
+            if classification_filter:
+                classification = str(patent_data.get('classification', ''))
+                if not classification.startswith(classification_filter):
+                    continue
+            
+            # Filter by title keywords
+            if title_keywords:
+                title = str(patent_data.get('title', '')).lower()
+                keywords = title_keywords.lower().split()
+                if not all(keyword in title for keyword in keywords):
+                    continue
+            
+            # Filter by specific title
+            if specific_title:
+                title = str(patent_data.get('title', '')).lower()
+                if specific_title.lower() not in title:
+                    continue
+            
+            filtered_results.append(result)
+            
+            # Stop if we have enough results
+            if len(filtered_results) >= top_k:
+                break
+        
+        end_time = time.time()
+        search_time = end_time - start_time
+        
+        # Add timing info to first result
+        if filtered_results:
+            filtered_results[0]['search_time_ms'] = round(search_time * 1000, 2)
+        
+        return filtered_results
+
 def demo_search_engine():
     """Simple demo for presentation"""
     # Load data
@@ -169,68 +226,22 @@ def demo_search_engine():
     for result in similar:
         if 'error' not in result:
             print(f"  {result['risk_level']}: {result['patent_id']} ({result['similarity_score']:.3f})")
-
-def interactive_search():
-    """Simple command-line interface for demo"""
-    # Load data
-    print("Patent Search Engine")
-    print("===================")
     
-    print("Loading database...")
-    loader = PatentDataLoader()
-    patents = loader.load_all_patents()
-    df = loader.patents_to_dataframe(patents)
-    engine = BasicPatentSearchEngine(df)
+    # Demo 3: Hybrid search
+    print(f"\nDemo 3: Hybrid Search")
+    print("Query: 'sensor' + classification starts with 'B60'")
+    hybrid_results = engine.hybrid_search(
+        query="sensor", 
+        classification_filter="B60", 
+        top_k=3
+    )
     
-    print(f"Loaded {len(df)} patents")
-    print("\nCommands:")
-    print("  search <query>     - Search by text")
-    print("  similar <patent_id> - Find similar patents")
-    print("  demo               - Run demo")
-    print("  quit               - Exit")
+    for result in hybrid_results:
+        print(f"  {result['risk_level']}: {result['patent_id']} ({result['similarity_score']:.3f})")
+        print(f"       {result['title'][:60]}...")
     
-    while True:
-        try:
-            command = input("\n> ").strip().lower()
-            
-            if command.startswith("search "):
-                query = command[7:]
-                results = engine.search_text(query, top_k=5)
-                print(f"\nResults for '{query}':")
-                for result in results:
-                    print(f"  {result['risk_level']}: {result['patent_id']} ({result['similarity_score']:.3f})")
-                    print(f"       {result['title']}")
-                    
-            elif command.startswith("similar "):
-                patent_id = command[9:]
-                results = engine.find_similar_patents(patent_id, top_k=5)
-                print(f"\nSimilar to {patent_id}:")
-                for result in results:
-                    if 'error' not in result:
-                        print(f"  {result['risk_level']}: {result['patent_id']} ({result['similarity_score']:.3f})")
-                        print(f"       {result['title']}")
-                    else:
-                        print(f"  Error: {result['error']}")
-                        
-            elif command == "demo":
-                demo_search_engine()
-                
-            elif command == "quit":
-                print("Goodbye!")
-                break
-                
-            else:
-                print("Unknown command. Type 'search <query>', 'similar <id>', 'demo', or 'quit'")
-                
-        except KeyboardInterrupt:
-            print("\nGoodbye!")
-            break
-        except Exception as e:
-            print(f"Error: {e}")
+    if hybrid_results:
+        print(f"Search time: {hybrid_results[0].get('search_time_ms', 0)}ms")
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "interactive":
-        interactive_search()
-    else:
-        demo_search_engine()
+    demo_search_engine()
